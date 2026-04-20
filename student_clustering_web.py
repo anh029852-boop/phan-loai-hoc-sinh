@@ -6,87 +6,113 @@ from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 
 # ==========================================
-# 1. THIẾT KẾ GIAO DIỆN (MODERN PINK THEME)
+# 1. CẤU HÌNH GIAO DIỆN (THEME & STYLE)
 # ==========================================
-st.set_page_config(page_title="AI Pink Focus - Phân loại học tập", layout="wide")
+st.set_page_config(page_title="AI Focus: Xếp loại xao nhãng học sinh", layout="wide")
 
+# CSS tùy chỉnh để chữ trắng nổi bật trên nền hồng
 st.markdown("""
 <style>
-    /* Nền ứng dụng màu hồng cực nhạt */
+    /* Nền tổng thể màu hồng trung tính */
     .stApp {
-        background-color: #fff1f2; 
-        color: #4c0519;
+        background-color: #f472b6; 
+        color: #ffffff;
     }
     
-    /* Tiêu đề chính màu hồng đậm */
-    h1, h2, h3 {
-        color: #be185d !important;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    /* Tiêu đề chính chữ trắng, in đậm, có bóng đổ để rõ nét */
+    h1 {
+        color: #ffffff !important;
+        font-weight: 800 !important;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        text-align: center;
+    }
+    
+    h2, h3 {
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
     }
 
-    /* Tùy chỉnh Nút bấm hiện đại */
+    /* Chữ trong toàn bộ ứng dụng */
+    p, label, .stMarkdown {
+        color: #ffffff !important;
+        font-weight: 500;
+    }
+
+    /* Các phần quan trọng cần in đậm */
+    b, strong {
+        font-weight: 900 !important;
+        color: #fff1f2 !important;
+        text-decoration: underline rgba(255,255,255,0.3);
+    }
+
+    /* Tùy chỉnh ô nhập liệu (Input) để không bị trùng màu */
+    .stNumberInput div div input {
+        background-color: #ffffff !important;
+        color: #be185d !important;
+        font-weight: bold !important;
+        border-radius: 10px;
+    }
+
+    /* Tùy chỉnh Nút bấm */
     .stButton>button {
-        background-color: #fb7185;
-        color: white;
-        border-radius: 12px;
-        border: none;
-        padding: 0.6rem 1.2rem;
+        background-color: #9d174d;
+        color: #ffffff !important;
+        border-radius: 15px;
+        border: 2px solid #ffffff;
         font-weight: bold;
-        transition: all 0.3s;
-        width: 100%;
+        transition: all 0.3s ease;
     }
     .stButton>button:hover {
-        background-color: #e11d48;
-        transform: scale(1.02);
-        color: white;
-    }
-
-    /* Khung nhập liệu trắng bo tròn */
-    .stForm {
-        background-color: white;
-        border-radius: 20px;
-        padding: 25px;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        border: 2px solid #fecdd3;
+        background-color: #ffffff;
+        color: #9d174d !important;
     }
 
     /* Bảng dữ liệu */
     .stDataFrame {
+        background-color: rgba(255, 255, 255, 0.2) !important;
         border-radius: 10px;
-        overflow: hidden;
+    }
+
+    /* Khung nhận xét */
+    .comment-box {
+        background-color: rgba(0, 0, 0, 0.2);
+        padding: 20px;
+        border-radius: 15px;
+        border: 2px solid #ffffff;
+        margin-top: 20px;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. HÀM LOGIC: PHÂN LOẠI & LỜI KHUYÊN
+# 2. LOGIC PHÂN LOẠI & NHẬN XÉT
 # ==========================================
 
-def get_detailed_advice(screen_time, notifications):
-    # Logic phân loại dựa trên luật (Rule-based)
-    if screen_time < 10 and notifications <= 1:
+def get_advice_styled(category):
+    if "A" in category:
         return {
-            "group": "Nhóm A: Chiến binh Deep Work (Focus Masters)",
-            "analysis": "Screen Time cực thấp, thông báo bằng 0. Bạn đã làm chủ hoàn toàn môi trường học tập.",
-            "status": "✨ Đây là nhóm 'mẫu hình'. Thời gian Deep Work chiếm trên 80% thời lượng phiên học.",
-            "advice": "Lời khuyên: Duy trì phong độ này! Bạn đang sở hữu siêu năng lực tập trung trong kỷ nguyên số.",
-            "color": "#15803d" # Xanh lá
+            "title": "NHÓM A: CHIẾN BINH DEEP WORK (FOCUS MASTERS)",
+            "status": "Trạng thái: **Làm chủ hoàn toàn môi trường học tập.**",
+            "analysis": "Đặc điểm: **Screen Time cực thấp (< 10 phút/phiên)**, số thông báo gần như bằng 0. Thời gian Deep Work chiếm **trên 80%**.",
+            "advice": "💡 Lời khuyên: Đây là mẫu hình tối ưu. Hãy tiếp tục duy trì và bảo vệ không gian tập trung này!",
+            "border": "#22c55e"
         }
-    elif notifications > 15 or screen_time > 40:
+    elif "C" in category:
         return {
-            "group": "Nhóm C: Bẫy xao nhãng (Digital Distraction Trap)",
-            "analysis": "Thông báo quá cao dẫn đến Screen Time chiếm phần lớn phiên học.",
-            "status": "🔴 Deep Work Time gần như bằng 0. Bạn đang bị thuật toán giải trí dẫn dắt hoàn toàn.",
-            "advice": "Lời khuyên: AI đề xuất cảnh báo đỏ! Hãy sử dụng AppBlock để khóa ứng dụng và bật chế độ Do Not Disturb cưỡng bách.",
-            "color": "#b91c1c" # Đỏ
+            "title": "NHÓM C: BẪY XAO NHÃNG (DIGITAL DISTRACTION TRAP)",
+            "status": "Trạng thái: **Đang bị thuật toán giải trí dẫn dắt hoàn toàn.**",
+            "analysis": "Đặc điểm: **Thông báo cao (> 15)** dẫn đến **Screen Time chiếm phần lớn (> 40 phút)**. Deep Work gần như bằng 0.",
+            "advice": "⚠️ Cảnh báo: AI đề xuất kịch bản thay đổi hành vi cưỡng bách. Hãy khóa ứng dụng hoàn toàn trong giờ học!",
+            "border": "#ef4444"
         }
     else:
         return {
-            "group": "Nhóm B: Vùng dao động (The Shallow Workers)",
-            "analysis": "Screen Time và thông báo ở mức trung bình. Có nỗ lực nhưng chưa quyết liệt.",
-            "status": "🔶 Trạng thái 'Học nông' (Shallow Work). Bạn vẫn làm được bài nhưng không có sự sáng tạo đột phá.",
-            "advice": "Lời khuyên: Hãy thử phương pháp Pomodoro và cất điện thoại sang phòng khác để chuyển dịch sang Nhóm A.",
-            "color": "#b45309" # Cam
+            "title": "NHÓM B: VÙNG DAO ĐỘNG (THE SHALLOW WORKERS)",
+            "status": "Trạng thái: **Học nông (Shallow Work), chưa bứt phá.**",
+            "analysis": "Đặc điểm: **Screen Time và Thông báo mức trung bình**. Có nỗ lực nhưng chưa quyết liệt loại bỏ xao nhãng.",
+            "advice": "🔶 Lời khuyên: Bạn cần quyết liệt hơn. Thử cất điện thoại sang phòng khác để chuyển từ 'học nông' sang 'học sâu'.",
+            "border": "#f59e0b"
         }
 
 # ==========================================
@@ -94,91 +120,99 @@ def get_detailed_advice(screen_time, notifications):
 # ==========================================
 
 def main():
-    st.title("🌸 AI Pink Focus: Phân cụm K-Means & Lời khuyên")
-    st.write("Nhập dữ liệu phiên học của bạn để AI tiến hành phân tích chuyên sâu.")
+    st.title("🚀 AI Focus: Xếp loại xao nhãng học sinh")
+    st.write("---")
 
     if 'sessions' not in st.session_state:
         st.session_state.sessions = []
 
-    col1, col2 = st.columns([1, 1.5])
+    col1, col2 = st.columns([1, 1.6])
 
     with col1:
-        st.subheader("📍 Nhập thông số")
+        st.subheader("📥 Nhập dữ liệu phiên")
         with st.form("input_form", clear_on_submit=True):
-            focus = st.number_input("Tổng thời gian học (phút)", min_value=1.0, value=60.0)
+            focus = st.number_input("Tổng thời gian phiên (phút)", min_value=1.0, value=60.0)
             screen = st.number_input("Screen Time (phút)", min_value=0.0, value=5.0)
-            notis = st.number_input("Số thông báo", min_value=0, step=1)
-            distractions = st.number_input("Số lần xao nhãng khác", min_value=0, step=1)
-            delay = st.number_input("Bắt đầu trễ (phút)", min_value=0.0)
+            notis = st.number_input("Số lượng thông báo", min_value=0, step=1)
+            distractions = st.number_input("Lần xao nhãng khác", min_value=0, step=1)
             
-            if st.form_submit_button("Lưu phiên học"):
+            if st.form_submit_button("LƯU PHIÊN HỌC"):
+                if screen < 10 and notis <= 1:
+                    cat = "Nhóm A"
+                elif notis > 15 or screen > 40:
+                    cat = "Nhóm C"
+                else:
+                    cat = "Nhóm B"
+                
                 st.session_state.sessions.append({
                     'Focus': focus, 'ScreenTime': screen, 'Notis': notis, 
-                    'Distractions': distractions, 'Delay': delay
+                    'Distractions': distractions, 'Category': cat
                 })
-                st.success("Đã thêm dữ liệu!")
+                st.rerun()
 
-        if st.button("🗑️ Xóa dữ liệu"):
+        if st.button("🗑️ XÓA TOÀN BỘ DỮ LIỆU"):
             st.session_state.sessions = []
             st.rerun()
 
     with col2:
         if st.session_state.sessions:
             df = pd.DataFrame(st.session_state.sessions)
-            st.subheader("📋 Lịch sử phiên học")
-            st.dataframe(df, use_container_width=True)
+            st.subheader("📋 Danh sách dữ liệu")
+            # Hiển thị bảng với màu sắc rõ ràng
+            st.dataframe(df[['Focus', 'ScreenTime', 'Notis', 'Category']], use_container_width=True)
 
             if len(df) >= 3:
-                if st.button("🚀 KÍCH HOẠT AI PHÂN CỤM (K-MEANS)", type="primary"):
+                if st.button("🚀 KÍCH HOẠT AI CLUSTERING (K-MEANS)"):
                     st.divider()
                     
-                    # Chạy K-Means
-                    X = df[['Focus', 'ScreenTime', 'Notis', 'Distractions', 'Delay']]
+                    # Học máy K-Means
+                    X = df[['Focus', 'ScreenTime', 'Notis', 'Distractions']]
                     scaler = StandardScaler()
                     X_scaled = scaler.fit_transform(X)
-                    
                     kmeans = KMeans(n_clusters=3, random_state=42, n_init=10)
                     df['AI_Cluster'] = kmeans.fit_predict(X_scaled)
 
-                    # Vẽ biểu đồ 3D
-                    st.subheader("📊 Bản đồ phân cụm AI")
-                    fig = plt.figure(figsize=(8, 6))
+                    # Biểu đồ 3D
+                    st.subheader("🌐 Không gian xao nhãng (AI Clustering)")
+                    fig = plt.figure(figsize=(8, 5), facecolor='#f472b6')
                     ax = fig.add_subplot(111, projection='3d')
-                    colors = ['#db2777', '#f472b6', '#9d174d'] # Các tông hồng
-                    for i in range(3):
-                        subset = df[df['AI_Cluster'] == i]
-                        ax.scatter(subset['Focus'], subset['ScreenTime'], subset['Notis'], 
-                                   s=100, label=f'Cụm AI {i}', c=colors[i])
+                    ax.set_facecolor('#f472b6')
                     
-                    ax.set_xlabel('Tập trung')
-                    ax.set_ylabel('Screen Time')
-                    ax.set_zlabel('Thông báo')
+                    # Màu sắc các cụm (Trắng, Đen, Hồng đậm) để nổi bật trên nền
+                    cluster_colors = ['#ffffff', '#000000', '#9d174d']
+                    for i in range(len(np.unique(df['AI_Cluster']))):
+                        c_data = df[df['AI_Cluster'] == i]
+                        ax.scatter(c_data['Focus'], c_data['ScreenTime'], c_data['Notis'], 
+                                   s=150, c=cluster_colors[i], edgecolors='white', label=f'Cụm {i}')
+                    
+                    ax.set_xlabel('Tập trung', color='white', fontweight='bold')
+                    ax.set_ylabel('Screen Time', color='white', fontweight='bold')
+                    ax.set_zlabel('Thông báo', color='white', fontweight='bold')
+                    ax.tick_params(axis='x', colors='white')
+                    ax.tick_params(axis='y', colors='white')
+                    ax.tick_params(axis='z', colors='white')
                     st.pyplot(fig)
 
-                    # ĐƯA RA LỜI KHUYÊN CHO PHIÊN CUỐI
+                    # Hiển thị Lời khuyên cho phiên cuối
                     st.divider()
-                    st.subheader("💡 Nhận xét & Lời khuyên từ AI")
-                    
-                    last = df.iloc[-1]
-                    advice_data = get_detailed_advice(last['ScreenTime'], last['Notis'])
+                    last_session = df.iloc[-1]
+                    advice = get_advice_styled(last_session['Category'])
                     
                     st.markdown(f"""
-                    <div style="background-color: white; padding: 25px; border-left: 10px solid {advice_data['color']}; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                        <h3 style="margin-top:0; color: {advice_data['color']};">{advice_data['group']}</h3>
-                        <p style="font-size: 1.1rem;"><b>Phân tích:</b> {advice_data['analysis']}</p>
-                        <p style="font-size: 1.1rem; color: #333;"><b>Trạng thái:</b> {advice_data['status']}</p>
-                        <hr style="border: 0.5px solid #eee;">
-                        <p style="font-size: 1.2rem; font-weight: bold; color: {advice_data['color']};">✨ {advice_data['advice']}</p>
+                    <div class="comment-box" style="border-left: 10px solid {advice['border']};">
+                        <h2 style="margin-top:0;">{advice['title']}</h2>
+                        <p style="font-size: 1.1rem;">{advice['status']}</p>
+                        <p style="font-size: 1rem;">{advice['analysis']}</p>
+                        <hr style="border-color: rgba(255,255,255,0.2);">
+                        <p style="font-size: 1.2rem; font-weight: bold;">{advice['advice']}</p>
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    st.caption(f"Thông tin thêm: Thuật toán K-Means đã xếp phiên này vào nhóm tương đồng số {last['AI_Cluster']}.")
+                    st.write(f"ℹ️ *AI ghi chú: Phiên này thuộc Cụm số **{last_session['AI_Cluster']}** dựa trên phân tích tương đồng dữ liệu.*")
             else:
-                st.warning("⚠️ Vui lòng nhập ít nhất 3 phiên học để AI có đủ dữ liệu phân cụm.")
+                st.warning("⚠️ Cần ít nhất 3 phiên học để AI bắt đầu phân cụm K-Means.")
         else:
-            st.info("Chưa có dữ liệu. Hãy nhập ở cột bên trái.")
-
-    st.markdown("<br><br><p style='text-align: center; color: #fb7185;'>💖 Học tập hiệu quả hơn mỗi ngày cùng AI Pink Focus 💖</p>", unsafe_allow_html=True)
+            st.info("Chưa có dữ liệu. Vui lòng nhập thông số ở cột bên trái.")
 
 if __name__ == "__main__":
     main()
